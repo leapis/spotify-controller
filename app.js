@@ -145,6 +145,9 @@ app.get('/request', function(req, res) {
     case 'save_track':
       fetch(`https://api.spotify.com/v1/me/tracks?ids=${req.query.id}`, res, 'PUT');
       break;
+    case 'save_album':
+      fetch(`https://api.spotify.com/v1/me/tracks?albums=${req.query.id}`, res, 'PUT');
+      break;
     case 'get_current_track':
       /*return*/fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET'); //TODO: set up handling returns
       break;
@@ -153,6 +156,22 @@ app.get('/request', function(req, res) {
       id.then(function(result){
         if (result !== undefined){
           var px = fetch(`https://api.spotify.com/v1/me/tracks?ids=${result.body.item.id}`, res, 'PUT');
+          px.then(function(result){
+            res.sendStatus(res.statusCode);
+          })
+        }
+        else{
+          res.sendStatus(res.statusCode);
+        }
+      }, function(err){
+        console.log(err);
+      });
+      break;
+    case 'save_current_album':
+      var id = fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+      id.then(function(result){
+        if (result !== undefined){
+          var px = fetch(`https://api.spotify.com/v1/me/albums?ids=${result.body.item.album.id}`, res, 'PUT');
           px.then(function(result){
             res.sendStatus(res.statusCode);
           })
