@@ -142,6 +142,16 @@ app.get('/request', function(req, res) {
     case 'set_volume':
       fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${req.query.volume_percent}`, res, 'PUT');
       break;
+    case 'save_track':
+      fetch(`https://api.spotify.com/v1/me/tracks?ids=${req.query.id}`, res, 'PUT');
+      break;
+    case 'get_current_track':
+      /*return*/fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET'); //TODO: set up handling returns
+      break;
+    case 'save_current_track':
+      saveCurrentTrack(fetch,fetch,res);
+      //fetch(`https://api.spotify.com/v1/me/tracks?ids=${newID}`, res, 'PUT');
+      break;
     case 'error':
       break;
   }
@@ -159,6 +169,33 @@ function fetch(url, res, type){
     json: true
   };
   switch (type){
+    case 'GET':
+      request.get(options, function(error, response, body) {
+        if (!error && response.statusCode === 204) {
+          res.sendStatus(response.statusCode);
+          console.log("Request: "+ url + ", Status: " + response.statusCode);
+        }
+        else if (!error){
+          res.sendStatus(response.statusCode);
+          if (response.statusCode === 204){
+              return;
+            }
+            else{
+              console.log(response);
+              return response;
+          }
+        }
+        else{
+          console.log("Error");
+          if (response){
+            res.send(response.statusCode);
+          }
+          else{
+            res.sendStatus(502); 
+          }
+        }
+      });
+      break;
     case 'POST':
       request.post(options, function(error, response, body) {
         if (!error && response.statusCode === 204) {
@@ -241,6 +278,12 @@ function refresh(){
     }
   });
 }
+
+async function saveCurrentTrack(f1, f2,res){
+  var id = await f1('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+  await console.log(id);
+}
+
 
 function readRefreshToken(){
   const PATH = './refresh_token.txt';
