@@ -149,8 +149,20 @@ app.get('/request', function(req, res) {
       /*return*/fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET'); //TODO: set up handling returns
       break;
     case 'save_current_track':
-      saveCurrentTrack(fetch,fetch,res);
-      //fetch(`https://api.spotify.com/v1/me/tracks?ids=${newID}`, res, 'PUT');
+      var id = fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+      id.then(function(result){
+        if (result !== undefined){
+          var px = fetch(`https://api.spotify.com/v1/me/tracks?ids=${result.body.item.id}`, res, 'PUT');
+          px.then(function(result){
+            res.sendStatus(res.statusCode);
+          })
+        }
+        else{
+          res.sendStatus(res.statusCode);
+        }
+      }, function(err){
+        console.log(err);
+      });
       break;
     case 'error':
       break;
@@ -160,7 +172,7 @@ app.get('/request', function(req, res) {
 function fetch(url, res, type){
   if(global_refresh_token == ""){
     console.log("Please Log In at localhost:8888");
-    res.sendStatus(409);
+    res.statusCode = 401; 
     return;
   }
   var options = {
@@ -168,89 +180,85 @@ function fetch(url, res, type){
     headers: { 'Authorization': 'Bearer ' + global_access_token },
     json: true
   };
-  switch (type){
-    case 'GET':
-      request.get(options, function(error, response, body) {
-        if (!error && response.statusCode === 204) {
-          res.sendStatus(response.statusCode);
-          console.log("Request: "+ url + ", Status: " + response.statusCode);
-        }
-        else if (!error){
-          res.sendStatus(response.statusCode);
-          if (response.statusCode === 204){
-              return;
-            }
-            else{
-              console.log(response);
-              return response;
+  return new Promise(function(resolve, reject) {
+    switch (type){
+      case 'GET':
+        request.get(options, function(error, response, body) {
+          if (!error && response.statusCode === 204) {
+            res.statusCode = response.statusCode;
+            console.log("Request: "+ url + ", Status: " + response.statusCode);
+            resolve();
           }
-        }
-        else{
-          console.log("Error");
-          if (response){
-            res.send(response.statusCode);
+          else if (!error){
+            res.statusCode = response.statusCode;
+            console.log("Request: "+ url + ", Status: " + response.statusCode);
+            resolve(response);
           }
           else{
-            res.sendStatus(502); 
-          }
-        }
-      });
-      break;
-    case 'POST':
-      request.post(options, function(error, response, body) {
-        if (!error && response.statusCode === 204) {
-          res.sendStatus(response.statusCode);
-          console.log("Request: "+ url + ", Status: " + response.statusCode);
-        }
-        else if (!error){
-          res.sendStatus(response.statusCode);
-          if (response.statusCode === 204){
-              return;
+            console.log("Error: "+ error);
+            if (response){
+              res.statusCode = response.statusCode;
+              resolve(response); //check for safety
             }
             else{
-              console.log(response);
-              return response;
+              res.statusCode = 502; 
+              resolve();
+            }
           }
-        }
-        else{
-          console.log("Error");
-          if (response){
-            res.send(response.statusCode);
+        });
+        break;
+      case 'POST':
+        request.post(options, function(error, response, body) {
+          if (!error && response.statusCode === 204) {
+            res.statusCode = response.statusCode;
+            console.log("Request: "+ url + ", Status: " + response.statusCode);
+            resolve();
+          }
+          else if (!error){
+            res.statusCode = response.statusCode;
+            console.log("Request: "+ url + ", Status: " + response.statusCode);
+            resolve(response);
           }
           else{
-            res.sendStatus(502); 
-          }
-        }
-      });
-      break;
-    case 'PUT':
-      request.put(options, function(error, response, body) {
-        if (!error && response.statusCode === 204) {
-          res.sendStatus(response.statusCode);
-          console.log("Request: "+ url + ", Status: " + response.statusCode);
-        }
-        else if (!error){
-          res.sendStatus(response.statusCode);
-          if (response.statusCode === 204){
-              return;
+            console.log("Error: "+ error);
+            if (response){
+              res.statusCode = response.statusCode;
+              resolve(response); //check for safety
             }
             else{
-              console.log(response.statusMessage);
-              return response;
+              res.statusCode = 502;  
+              resolve();
+            }
           }
-        }
-        else{
-          console.log("error");
-          if (response){
-            res.send(response.statusCode);
+        });
+        break;
+      case 'PUT':
+        request.put(options, function(error, response, body) {
+          if (!error && response.statusCode === 204) {
+            res.statusCode = response.statusCode;
+            console.log("Request: "+ url + ", Status: " + response.statusCode);
+            resolve();
+          }
+          else if (!error){
+            res.statusCode = response.statusCode;
+            console.log("Request: "+ url + ", Status: " + response.statusCode);
+            resolve(response);
           }
           else{
-            res.sendStatus(502); 
+            console.log("Error: "+ error);
+            if (response){
+              res.statusCode = response.statusCode;
+              resolve(response); //check for safety
+            }
+            else{
+              res.statusCode = 502; 
+              resolve();
+            }
           }
-        }
-      });
-      break;
-  }
+        });
+        break;
+    }
+  });
 }
 
 function refresh(){
@@ -279,10 +287,6 @@ function refresh(){
   });
 }
 
-async function saveCurrentTrack(f1, f2,res){
-  var id = await f1('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
-  await console.log(id);
-}
 
 
 function readRefreshToken(){
