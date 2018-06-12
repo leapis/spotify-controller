@@ -183,7 +183,65 @@ app.get('/request', function(req, res) {
         console.log(err);
       });
       break;
-    case 'error':
+    case 'follow_artist':  //TODO: make get_current for all too?
+      fetch(`https://api.spotify.com/v1/me/following?type=artist&ids=${req.query.id}`, res, 'PUT');
+      break;
+    case 'follow_user':
+      fetch(`https://api.spotify.com/v1/me/following?type=user&ids=${req.query.id}`, res, 'PUT');
+      break;
+    case 'follow_current_artist': //note- follow button still appears- spotify client side error, spotify must be restarted for visual bug to be fixed
+      var id = fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+      id.then(function(result){
+        if (result !== undefined){
+          var px = fetch(`https://api.spotify.com/v1/me/following?type=artist&ids=${result.body.item.artists[0].id}`, res, 'PUT'); //only follows first, maybe make follow_all_artists? or make it an arg
+          px.then(function(result){
+            res.sendStatus(res.statusCode);
+          });
+        }
+        else{
+          res.sendStatus(res.statusCode);
+        }
+      }, function(err){
+        console.log(err);
+      });
+      break;
+    case 'follow_current_user':
+      var id = fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+      id.then(function(result){
+        if (result && result.body.context && result.body.context.type === 'playlist'){
+          console.log(result.body.context.uri.split(':')[2]);
+          var px = fetch(`https://api.spotify.com/v1/me/following?type=user&ids=${result.body.context.uri.split(':')[2]}`, res, 'PUT');
+          px.then(function(result){
+            res.sendStatus(res.statusCode);
+          });
+        }
+        else{
+          res.sendStatus(409)
+        }
+      });
+      break;
+    case 'follow_playlist':
+      fetch(req.query.url + '/followers', res, 'PUT');
+      break;
+    case 'follow_current_playlist':
+      var id = fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+      id.then(function(result){
+        if (result && result.body.context && result.body.context.type === 'playlist'){
+          var px = fetch(result.body.context.href + '/followers', res, 'PUT');
+          px.then(function(result){
+            res.sendStatus(res.statusCode);
+          });
+        }
+        else{
+          res.sendStatus(409)
+        }
+      });
+      break;
+    case 'test':
+      var id = fetch('https://api.spotify.com/v1/me/player/currently-playing', res, 'GET');
+      id.then(function(result){
+        console.log(result.body.context);
+      });
       break;
   }
 });
