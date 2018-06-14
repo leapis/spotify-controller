@@ -130,6 +130,18 @@ app.get('/request', function(req, res) {
     case 'previous_song':
       fetch('https://api.spotify.com/v1/me/player/previous', res, 'POST');
       break;
+    case 'pause':
+      fetch(
+      break;
+    case 'play':
+      fetch(
+      break;
+    case 'seek':
+      fetch(
+      break;
+    case 'shuffle':
+      fetch(
+      break;
     case 'repeat_track':
       fetch('https://api.spotify.com/v1/me/player/repeat?state=track', res, 'PUT');
       break;
@@ -358,7 +370,7 @@ function refresh(){
       return 204;
     }
     else{
-      console.log("Error: refresh_token.txt potentially corrupted, please delete file and restart program");
+      console.log("Error: Could not refresh token. Please check internet connection, or deleted refresh_token.txt and restart.");
       return 409;
     }
   });
